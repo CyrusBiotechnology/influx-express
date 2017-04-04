@@ -64,7 +64,10 @@ module.exports = function expressInfluxInit (options) {
       var responseTime = Date.now() - req.start;
       var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
       var geo = geoip.lookup(ip);
-
+      var cords = (geo)? geo.ll: [0.0, 0.0];
+      var latitude = coords[0];
+      var longitude = coords[1];
+      
       var point = {
         measurement: "requests",
         "tags": {
@@ -73,7 +76,7 @@ module.exports = function expressInfluxInit (options) {
           "verb": req.method,
           "status": res.statusCode,
           "ip": ip,
-          "geohash": geohash.encode(geo.ll[0], geo.ll[1]),
+          "geohash": geohash.encode(latitude, longitude),
         },
         "fields": {
           "responseTime": responseTime,
