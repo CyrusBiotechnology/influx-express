@@ -77,6 +77,11 @@ module.exports = function expressInfluxInit (options) {
           "status": res.statusCode,
           "ip": ip,
           "geohash": geohash.encode(latitude, longitude),
+          "country": geo.country || 'n/a',
+          "region": geo.region || 'n/a',
+          "city": geo.city || 'n/a',
+          "metro": geo.metro || 0,
+          "zip" : geo.zip || 0
         },
         "fields": {
           "responseTime": responseTime,
