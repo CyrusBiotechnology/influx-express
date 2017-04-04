@@ -45,7 +45,7 @@ app.use(influxExpress(influxOpts))
 
 ### Data
 
-Currently this example implementation only gathers the following data. 
+Currently this example implementation only gathers the following data.
 If you have some data you would like to see gathered by this plugin please open an issue.
 
 ```yaml
@@ -56,6 +56,12 @@ database: 'node'
     - host: req.hostname
     - verb: req.method
     - status: req.statusCode
+    - ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress
+    - geohash: geoip.lookup(ip);
+
+  optional tags:
+    POINT_LABEL_NAME: POINT_LABEL_VALUE // (pass as environment variables)
+
   fields:
     - responseTime: req.startTime - res.finishTime
 ```

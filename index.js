@@ -1,8 +1,10 @@
 var Influx = require('influx')
 var extend = require('obj-extend');
 var events = require('events')
+var geoip = require('geoip-lite');
+var geohash = require('ngeohash');
 
-// Call the import to instantiate a middleware (req, res, next) 
+// Call the import to instantiate a middleware (req, res, next)
 // function that logs response time to InfluxDB
 module.exports = function expressInfluxInit (options) {
   // Default Influx connection settings
@@ -14,8 +16,8 @@ module.exports = function expressInfluxInit (options) {
     username: "",
     password: "",
     batchSize: 2,
-  } 
-  
+  }
+
   // This is a convinence function for creating the InfluxDB connection string
   var influxURL = function (options) {
     if (options.username && options.password) {
@@ -23,34 +25,34 @@ module.exports = function expressInfluxInit (options) {
     }
     return (options.protocol + "://" + options.host + ":" + options.port + "/" + options.database)
   }
-  
+
   // Merge user options into the defaults and create client
   options = extend(clientDefaults, options)
   var client = new Influx.InfluxDB(influxURL(options))
-  
+
   // Create batcher
   var batch = new events.EventEmitter();
   batch.points = [];
-  
+
   // When each point is added check the size of the batch and send if >= batchSize
   var writePoints = function () {
     var len = this.points.length
-    
+
     // Check the length of the point buffer
-    if (len >= options.batchSize) {  
+    if (len >= options.batchSize) {
       // Write the points and log error if any
       client.writePoints(this.points).catch(function (error) {
         console.log(error.message)
       })
-      
+
       // Reset point buffer
       this.points = []
     }
   }
-  
+
   // Set event listener
   batch.on("addPoint", writePoints);
-  
+
   // Express Middleware
   return function expressInflux (req, res, next) {
     // Start request timer
@@ -60,21 +62,31 @@ module.exports = function expressInfluxInit (options) {
     function makePoint() {
       // Pull start time from req and log responseTime
       var responseTime = Date.now() - req.start;
-      
-      // Add the new point to the batch of points
-      batch.points.push({
+      var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      var geo = geoip.lookup(ip);
+
+      var point = {
         measurement: "requests",
         "tags": {
           "path": req.path,
           "host": req.hostname,
           "verb": req.method,
           "status": res.statusCode,
+          "ip": ip,
+          "geohash": geohash.encode(geo.ll[0], geo.ll[1]),
         },
         "fields": {
           "responseTime": responseTime,
         },
-      })
-      
+      }
+
+      if (process.env.POINT_LABEL_NAME) {
+        point.tags[process.env.POINT_LABEL_NAME] = process.env.POINT_LABEL_VALUE;
+      }
+
+      // Add the new point to the batch of points
+      batch.points.push(point)
+
       // Emit the 'addPoint' event
       batch.emit("addPoint")
     }

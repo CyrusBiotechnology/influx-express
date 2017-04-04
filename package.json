@@ -22,7 +22,9 @@
   },
   "homepage": "https://github.com/jackzampolin/influx-express#readme",
   "dependencies": {
+    "geoip-lite": "^1.2.0",
     "influx": "^5.0.0-alpha.4",
+    "ngeohash": "^0.6.0",
     "obj-extend": "^0.1.0"
   }
 }
