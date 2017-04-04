@@ -64,7 +64,19 @@ module.exports = function expressInfluxInit (options) {
       var responseTime = Date.now() - req.start;
       var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
       var geo = geoip.lookup(ip);
-      var coords = (geo)? geo.ll: [0.0, 0.0];
+      
+      if(!geo) {
+          geo = {
+            country: 'n/a',
+            region: 'n/a',
+            city: 'n/a',
+            metro: 0,
+            zip: 0,
+            ll: [0.0, 0.0]
+          }
+      }
+      
+      var coords = geo.ll;
       var latitude = coords[0];
       var longitude = coords[1];
       
