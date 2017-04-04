@@ -62,7 +62,7 @@ module.exports = function expressInfluxInit (options) {
     function makePoint() {
       // Pull start time from req and log responseTime
       var responseTime = Date.now() - req.start;
-      var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      var ip = req.headers['X-Real-IP'] || req.connection.remoteAddress;
       var geo = geoip.lookup(ip);
       
       if(!geo) {
