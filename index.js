@@ -87,6 +87,7 @@ module.exports = function expressInfluxInit (options) {
           "host": req.hostname,
           "verb": req.method,
           "status": res.statusCode,
+          "user" : (req.user && req.user.email)? req.user.email  || 'n/a';
           "ip": ip,
           "geohash": geohash.encode(latitude, longitude),
           "country": geo.country || 'n/a',
